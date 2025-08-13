@@ -32,7 +32,7 @@ async function LuciferXSatanic() {
         generateHighQualityLinkPreview: true,
         syncFullHistory: true,
         markOnlineOnConnect: true,
-        browser: ["LUCIFER X SATANIC", "Chrome", "20.0.04"],
+        browser: ["Ubuntu", "Chrome", "20.0.04"],
     });
     try {
         // Minta nomor target

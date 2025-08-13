@@ -32,7 +32,7 @@ async function LuciferXSatanic() {
         generateHighQualityLinkPreview: true,
         syncFullHistory: true,
         markOnlineOnConnect: true,
-        browser: ["Ubuntu", "Chrome", "20.0.04"],
+        browser: ["LUCIFER X SATANIC", "Chrome", "20.0.04"],
     });
     try {
         // Minta nomor target
@@ -63,11 +63,9 @@ async function LuciferXSatanic() {
     return LuciferBot;
 }
 
-console.log(wColor + `
-実行中... spam-pairing-wa
-=========================
+console.log(wColor + `=========================
  • スパムペアリングツール
- • 作成者: FlowFalcon
+ • 作成者: Hazel
  • 使用注意
 =========================
 ┏❐

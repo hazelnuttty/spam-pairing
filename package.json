@@ -14,7 +14,6 @@
     "@whiskeysockets/baileys": "latest",
     "clear-console": "latest",
     "pino": "latest",
-    "open": "latest",
     "qrcode-terminal": "latest"
   }
 }

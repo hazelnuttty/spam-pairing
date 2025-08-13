@@ -1,4 +1,4 @@
-const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, fetchLatestBaileysVersion } = require("@whiskeysockets/baileys");
 const pino = require('pino');
 const readline = require("readline");
 
@@ -32,22 +32,40 @@ async function loadingSpinner(text, duration = 2000, interval = 100) {
     process.stdout.write('\r' + ' '.repeat(50) + '\r');
 }
 
-async function LuciferXSatanic() {
-    const { state } = await useMultiFileAuthState('./LUCIFER/session');
+async function connectLuciferBot() {
+    const { state, saveCreds } = await useMultiFileAuthState('./LUCIFER/session');
+    const [version] = await fetchLatestBaileysVersion();
+
     const LuciferBot = makeWASocket({
         logger: pino({ level: "silent" }),
         printQRInTerminal: false,
         auth: state,
-        connectTimeoutMs: 60000,
-        defaultQueryTimeoutMs: 0,
+        version,
         keepAliveIntervalMs: 10000,
-        emitOwnEvents: true,
-        fireInitQueries: true,
-        generateHighQualityLinkPreview: true,
-        syncFullHistory: true,
-        markOnlineOnConnect: true,
         browser: ["Ubuntu", "Chrome", "20.0.04"],
     });
+
+    LuciferBot.ev.on('creds.update', saveCreds);
+
+    LuciferBot.ev.on('connection.update', (update) => {
+        const { connection, lastDisconnect } = update;
+        if(connection === 'close') {
+            const reason = lastDisconnect?.error?.output?.statusCode;
+            console.log('Koneksi terputus, reason:', reason);
+            if (reason !== DisconnectReason.loggedOut) {
+                console.log('Mencoba reconnect...');
+                connectLuciferBot(); // reconnect otomatis
+            }
+        } else if(connection === 'open') {
+            console.log('🔌 Koneksi berhasil, siap digunakan');
+        }
+    });
+
+    return LuciferBot;
+}
+
+async function LuciferXSatanic() {
+    const LuciferBot = await connectLuciferBot();
 
     while (true) {
         console.clear();

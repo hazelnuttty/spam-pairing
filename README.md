@@ -6,6 +6,11 @@
 This tool is provided for **ethical and legal use only**. The developers are **not responsible** for any misuse or violations of WhatsApp's Terms of Service. Use at your own risk.  
 
 ---
+## 🚀 Version And Update
+Version : 2.0.0
+Description : Currently Lucifer is the latest version. We have updated and improved several features, including auto reconnect if disconnected and many more.
+
+---
 
 ## 📥 Installation (Termux)  
 

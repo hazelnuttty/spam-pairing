@@ -35,7 +35,7 @@ async function loadingSpinner(text, duration = 2000, interval = 100) {
 async function connectWhatsApp() {
     let retryCount = 0;
     const maxRetries = 5;
-    const retryDelay = 5000; // 5 seconds
+    const retryDelay = 5000;
     
     while (retryCount < maxRetries) {
         try {
@@ -54,8 +54,7 @@ async function connectWhatsApp() {
                 markOnlineOnConnect: true,
                 browser: ["Ubuntu", "Chrome", "20.0.04"],
             });
-
-            // Handle connection events
+            
             LuciferBot.ev.on('connection.update', (update) => {
                 const { connection, lastDisconnect } = update;
                 if (connection === 'close') {
@@ -69,7 +68,7 @@ async function connectWhatsApp() {
                     }
                 } else if (connection === 'open') {
                     console.log(wColor + '\nSuccessfully connected to WhatsApp!' + xColor);
-                    retryCount = 0; // Reset retry counter on successful connection
+                    retryCount = 0;
                 }
             });
 
@@ -88,8 +87,7 @@ async function connectWhatsApp() {
 async function LuciferXSatanic() {
     try {
         let LuciferBot = await connectWhatsApp();
-
-        // Reconnect handler for the main loop
+        
         const handleReconnect = async () => {
             console.log(wColor + '\nReconnecting...' + xColor);
             try {
@@ -149,7 +147,6 @@ async function LuciferXSatanic() {
                         console.log(wColor + `スパム成功 ✅ 番号 : ${phoneNumber} [${i + 1}/${LuciferCodes}]` + xColor);
                     } catch (error) {
                         console.error('エラー:', error.message);
-                        // Attempt to reconnect if there's an error
                         const reconnected = await handleReconnect();
                         if (!reconnected) break;
                     }
@@ -161,7 +158,6 @@ async function LuciferXSatanic() {
 
             } catch (error) {
                 console.error('エラーが発生しました', error.message);
-                // Attempt to reconnect if there's a major error
                 const reconnected = await handleReconnect();
                 if (!reconnected) break;
                 await delay(3000);
